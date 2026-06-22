@@ -1,22 +1,25 @@
 #!/bin/bash
-# setup.sh — Wire the brain hook to this workspace
-# Run once after copying templates and filling them in.
+# setup.sh — Wire the brain vault hook to your workspace
+# Run this from your Bob Builder workspace directory (not this repo).
+#
+# Usage:
+#   cd ~/your-bob-workspace
+#   bash ~/path/to/this-repo/setup.sh
 
 set -e
 
-WORKSPACE="$(cd "$(dirname "$0")" && pwd)"
+WORKSPACE="$(pwd)"
 BRAIN_HOT="$WORKSPACE/brain/_HOT.md"
 SETTINGS="$WORKSPACE/.claude/settings.json"
 
-echo ""
-echo "Wiring brain hook..."
-echo "Workspace: $WORKSPACE"
-echo ""
+if [ ! -f "$BRAIN_HOT" ]; then
+  echo "Error: brain/_HOT.md not found in $WORKSPACE"
+  echo "Make sure you copied the brain/ folder into your workspace first."
+  exit 1
+fi
 
-# Create .claude directory if it doesn't exist
 mkdir -p "$WORKSPACE/.claude"
 
-# Write settings.json with the real brain/_HOT.md path
 cat > "$SETTINGS" << EOF
 {
   "hooks": {
@@ -46,29 +49,9 @@ cat > "$SETTINGS" << EOF
 }
 EOF
 
-echo "Hook wired to: $BRAIN_HOT"
-
-# Create sequence counter
-if [ ! -f "$WORKSPACE/_sequence.md" ]; then
-  cat > "$WORKSPACE/_sequence.md" << 'EOF'
-# Sequence Counter
-_Resets daily. Global across all capture types._
-
-## YYYY-MM-DD
-- Q: 000
-- D: 000
-- T: 000
-- C: 000
-- X: 000
-EOF
-  echo "Sequence counter created"
-fi
-
 echo ""
-echo "Done. Start your first session with:"
-echo "  claude"
+echo "Done. Brain hook wired to:"
+echo "  $BRAIN_HOT"
 echo ""
-echo "Then say: 'Wake up. Read your boot files and tell me what you see.'"
-echo ""
-echo "See day-one-walkthrough.md if you want to know what to expect."
+echo "Restart your Claude Code session to activate."
 echo ""
