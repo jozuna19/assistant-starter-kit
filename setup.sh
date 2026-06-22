@@ -1,6 +1,6 @@
 #!/bin/bash
-# setup.sh — AI Assistant Workspace Setup
-# Run this once after unzipping, from inside the folder.
+# setup.sh — Wire the brain hook to this workspace
+# Run once after copying templates and filling them in.
 
 set -e
 
@@ -9,26 +9,48 @@ BRAIN_HOT="$WORKSPACE/brain/_HOT.md"
 SETTINGS="$WORKSPACE/.claude/settings.json"
 
 echo ""
-echo "Setting up your AI assistant workspace..."
+echo "Wiring brain hook..."
 echo "Workspace: $WORKSPACE"
 echo ""
 
-# Patch the settings.json with the real brain/_HOT.md path
-sed -i '' "s|BRAIN_HOT_PATH|$BRAIN_HOT|g" "$SETTINGS"
-echo "✓ Hooks wired to $BRAIN_HOT"
+# Create .claude directory if it doesn't exist
+mkdir -p "$WORKSPACE/.claude"
 
-# Create placeholder files so empty dirs aren't invisible
-touch "$WORKSPACE/captures/questions/.keep"
-touch "$WORKSPACE/captures/decisions/.keep"
-touch "$WORKSPACE/captures/tasks/.keep"
-touch "$WORKSPACE/captures/commitments/.keep"
-touch "$WORKSPACE/captures/context/.keep"
-touch "$WORKSPACE/projects/.keep"
-touch "$WORKSPACE/people/clients/.keep"
-touch "$WORKSPACE/people/internal/.keep"
+# Write settings.json with the real brain/_HOT.md path
+cat > "$SETTINGS" << EOF
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"$BRAIN_HOT\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"$BRAIN_HOT\""
+          }
+        ]
+      }
+    ]
+  }
+}
+EOF
 
-# Create the sequence counter file
-cat > "$WORKSPACE/_sequence.md" << 'EOF'
+echo "Hook wired to: $BRAIN_HOT"
+
+# Create sequence counter
+if [ ! -f "$WORKSPACE/_sequence.md" ]; then
+  cat > "$WORKSPACE/_sequence.md" << 'EOF'
 # Sequence Counter
 _Resets daily. Global across all capture types._
 
@@ -39,16 +61,14 @@ _Resets daily. Global across all capture types._
 - C: 000
 - X: 000
 EOF
-echo "✓ Sequence counter created"
+  echo "Sequence counter created"
+fi
 
 echo ""
-echo "Done! Next steps:"
+echo "Done. Start your first session with:"
+echo "  claude"
 echo ""
-echo "  1. Open SOUL.md — fill in your assistant's name and personality"
-echo "  2. Open USER.md — fill in your name, email, role, and key contacts"
-echo "  3. Open MEMORY.md — add your team's terminology if you know it now"
-echo "  4. Run 'claude' in this folder to start your first session"
+echo "Then say: 'Wake up. Read your boot files and tell me what you see.'"
 echo ""
-echo "On first run, tell your assistant:"
-echo "  'Read all the setup files and introduce yourself.'"
+echo "See day-one-walkthrough.md if you want to know what to expect."
 echo ""
